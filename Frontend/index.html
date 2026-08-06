@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 40px 20px;
+    color: #222;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 30px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 0 0 25px 0;
+    font-size: 26px;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  textarea{
+    resize: verticle;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .btn-add {
+    background: #2563eb;
+    color: white;
+  }
+  .btn-add:hover { background: #1d4ed8; }
+
+  #taskList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fafafa;
+  }
+  .task-item.completed {
+    opacity: 0.55;
+  }
+  .task-item.completed .task-title {
+    text-decoration: line-through;
+  }
+  .task-info { flex: 1; }
+  .task-title {
+    font-weight: 600;
+    margin: 0 0 4px 0;
+  }
+  .task-desc {
+    font-size: 13px;
+    color: #555;
+    margin: 0;
+  }
+  .task-meta {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .task-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 10px;
+  }
+  .btn-complete {
+    background: #16a34a;
+    color: white;
+  }
+  .btn-complete:hover { background: #15803d; }
+  .btn-delete {
+    background: #dc2626;
+    color: white;
+  }
+  .btn-delete:hover { background: #b91c1c; }
+  .empty-state {
+    text-align: center;
+    color: #999;
+    padding: 20px 0;
+    font-size: 14px;
+  }
+  .status-msg {
+    text-align: center;
+    font-size: 13px;
+    margin-bottom: 10px;
+    min-height: 18px;
+  }
+  .status-msg.error { color: #dc2626; }
+  .status-msg.success { color: #16a34a; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Task Manager</h1>
+
+  <form id="taskForm">
+    <input type="text" id="taskTitle" placeholder="Task title" required>
+    <textarea id="taskDesc" placeholder="Description (optional)" rows="2"></textarea>
+    <button type="submit" class="btn-add">Add Task</button>
+  </form>
+
+  <p id="statusMsg" class="status-msg"></p>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+  // -----------------------------------------------------------
+  // IMPORTANT
+  // Replace ONLY the URL below with your API Gateway Invoke URL.
+  // -----------------------------------------------------------
+  const API_BASE_URL = "https://y44pwheyo0.execute-api.us-east-1.amazonaws.com/prod";
+
+  const taskForm = document.getElementById("taskForm");
+  const taskTitleInput = document.getElementById("taskTitle");
+  const taskDescInput = document.getElementById("taskDesc");
+  const taskList = document.getElementById("taskList");
+  const statusMsg = document.getElementById("statusMsg");
+
+  function showStatus(message, type) {
+    statusMsg.textContent = message;
+    statusMsg.className = "status-msg " + (type || "");
+    if (message) {
+      setTimeout(() => { statusMsg.textContent = ""; }, 3000);
+    }
+  }
+
+  // GET all tasks
+  async function fetchTasks() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks`);
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      const data = await res.json();
+      renderTasks(data.tasks || data);
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err);
+      showStatus("Could not load tasks. Check API connection.", "error");
+      taskList.innerHTML = `<li class="empty-state">Unable to load tasks.</li>`;
+    }
+  }
+
+  //  Create a task
+  async function createTask(title, description) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description })
+      });
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      showStatus("Task added.", "success");
+      await fetchTasks();
+    } catch (err) {
+      console.error("Failed to create task:", err);
+      showStatus("Could not add task.", "error");
+    }
+  }
+
+  // Update a task
+  async function updateTask(taskId, updates) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      });
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      
+      showStatus("Task updated.", "success");
+
+      await fetchTasks();
+    } catch (err) {
+      console.error("Failed to update task:", err);
+      showStatus("Could not update task.", "error");
+    }
+  }
+
+  //Delete a task
+  async function deleteTask(taskId) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      showStatus("Task deleted.", "success");
+      await fetchTasks();
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+      showStatus("Could not delete task.", "error");
+    }
+  }
+
+  // Display tasks
+  function renderTasks(tasks) {
+    taskList.innerHTML = "";
+
+    if (!tasks || tasks.length === 0) {
+      taskList.innerHTML = `<li class="empty-state">No tasks yet. Add one above.</li>`;
+      return;
+    }
+
+    tasks.forEach(task => {
+      const li = document.createElement("li");
+      li.className = "task-item" + (task.status === "complete" ? " completed" : "");
+
+      const createdDate = task.createdAt
+        ? new Date(task.createdAt).toLocaleDateString()
+        : "";
+
+      li.innerHTML = `
+        <div class="task-info">
+          <p class="task-title">${escapeHtml(task.title)}</p>
+          ${task.description ? `<p class="task-desc">${escapeHtml(task.description)}</p>` : ""}
+          ${createdDate ? `<p class="task-meta">Added ${createdDate}</p>` : ""}
+        </div>
+        <div class="task-actions">
+          ${task.status !== "complete"
+            ? `<button class="btn-complete" data-id="${task.taskId}">Done</button>`
+            : ""}
+          <button class="btn-delete" data-id="${task.taskId}">Delete</button>
+        </div>
+      `;
+      taskList.appendChild(li);
+    });
+
+
+    taskList.querySelectorAll(".btn-complete").forEach(btn => {
+      btn.addEventListener("click", () => updateTask(btn.dataset.id, { status: "complete" }));
+    });
+    taskList.querySelectorAll(".btn-delete").forEach(btn => {
+      btn.addEventListener("click", () => deleteTask(btn.dataset.id));
+    });
+  }
+
+  // Prevent HTML injection
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Add task when form is submitted
+  taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = taskTitleInput.value.trim();
+    const description = taskDescInput.value.trim();
+    if (!title) return;
+
+    createTask(title, description);
+    taskTitleInput.value = "";
+    taskDescInput.value = "";
+  });
+
+  // Load tasks when website opens
+  fetchTasks();
+</script>
+
+</body>
+</html>
