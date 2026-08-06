@@ -101,6 +101,14 @@
     gap: 6px;
     margin-left: 10px;
   }
+  .btn-edit {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #d97706;
+}
   .btn-complete {
     background: #16a34a;
     color: white;
@@ -253,21 +261,61 @@
           ${createdDate ? `<p class="task-meta">Added ${createdDate}</p>` : ""}
         </div>
         <div class="task-actions">
+
+          <button class="btn-edit" data-id="${task.taskId}">
+            Edit
+          </button>
+
           ${task.status !== "complete"
             ? `<button class="btn-complete" data-id="${task.taskId}">Done</button>`
             : ""}
-          <button class="btn-delete" data-id="${task.taskId}">Delete</button>
+
+          <button class="btn-delete" data-id="${task.taskId}">
+            Delete
+          </button>
+
         </div>
-      `;
+        `;
       taskList.appendChild(li);
     });
 
 
-    taskList.querySelectorAll(".btn-complete").forEach(btn => {
-      btn.addEventListener("click", () => updateTask(btn.dataset.id, { status: "complete" }));
+    taskList.querySelectorAll(".btn-edit").forEach(btn => {
+      btn.addEventListener("click", () => {
+
+        const task = tasks.find(t => t.taskId === btn.dataset.id);
+
+        const newTitle = prompt("Edit task title:", task.title);
+
+        if (newTitle === null || newTitle.trim() === "") {
+          return;
+        }
+
+        const newDescription = prompt(
+          "Edit description:",
+          task.description || ""
+        );
+
+        if (newDescription === null) {
+          return;
+        }
+
+        updateTask(task.taskId, {
+          title: newTitle.trim(),
+          description: newDescription.trim()
+        });
+      });
     });
+    taskList.querySelectorAll(".btn-complete").forEach(btn => {
+      btn.addEventListener("click", () => {
+        updateTask(btn.dataset.id, { status: "complete" });
+      });
+    });
+
     taskList.querySelectorAll(".btn-delete").forEach(btn => {
-      btn.addEventListener("click", () => deleteTask(btn.dataset.id));
+      btn.addEventListener("click", () => {
+        deleteTask(btn.dataset.id);
+      });
     });
   }
 
