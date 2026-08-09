@@ -4,6 +4,9 @@ A serverless task management web application built and deployed using AWS.
 
 Users can create, view, edit, complete, and delete tasks. The frontend communicates with a REST API that invokes AWS Lambda functions, with task data stored in Amazon DynamoDB.
 
+<img width="1511" height="874" alt="Screenshot 2026-08-06 at 6 52 33 PM" src="https://github.com/user-attachments/assets/26a29ba5-3267-44af-b748-0fed6ca4d041" />
+
+
 ## Architecture
 
 ![Architecture Diagram](screenshots/architecture.png)
