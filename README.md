@@ -59,9 +59,11 @@ API Gateway routes HTTP requests from the frontend to the appropriate Lambda fun
 
 Four Lambda functions handle the application's CRUD operations:
 
+
 - `create-task` — writes new tasks to DynamoDB
 
 <img width="1512" height="622" alt="create-task lambda" src="https://github.com/user-attachments/assets/1b2cf3f2-3a5a-48e3-940a-d363ccf34395" />
+
 
 
 - `get-tasks` — retrieves tasks
@@ -69,13 +71,17 @@ Four Lambda functions handle the application's CRUD operations:
 <img width="1512" height="733" alt="get-task lambda" src="https://github.com/user-attachments/assets/cdfebfb4-ba8f-4069-95f4-69837f874755" />
 
 
+
 - `update-task` — updates task information or status
 
 <img width="1510" height="733" alt="update-task lambda" src="https://github.com/user-attachments/assets/5dc42362-b762-4cf3-9c5c-0fbc533985ba" />
 
+
+
 - `delete-task` — removes tasks
 
 <img width="1512" height="556" alt="delete-task lambda" src="https://github.com/user-attachments/assets/98b238b2-de77-4bbf-87e7-2b6f1337ab00" />
+
 
 
 ## Database
